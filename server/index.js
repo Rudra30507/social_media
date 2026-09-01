@@ -12,7 +12,7 @@ mongoose.connect(process.env.url).then(() => {
 const app = express();
 const port = 2430;
 
-app.get('/', (req,res)=>{
+app.get('/', (req, res) => {
     res.send("Hello public")
 })
 
