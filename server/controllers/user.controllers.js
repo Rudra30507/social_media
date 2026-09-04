@@ -1,4 +1,5 @@
 // register controllers 
+import User from "../models/user.model.js";
 
 export const registerUser = async(req , res)=>{
     try{
@@ -21,7 +22,7 @@ export const registerUser = async(req , res)=>{
         return res.status(409).json({message:"Email already exists"})
     }
 
-    const newUser = User.create({
+    const newUser = await User.create({
         name,
         username,
         email,
