@@ -118,3 +118,55 @@ export const getProfile = async (req, res) => {
         res.status(500).json({ message: 'server crashed', error: err.message })
     }
 }
+
+// logout user
+export const logoutUser = async (req, res) => {
+    try {
+        res.clearCookie('token')
+        return res.status(200).json({ message: "Logged out successfully" })
+    }
+    catch (err) {
+        res.status(500).json({ message: 'server crashed', error: err.message })
+    }
+}
+
+// change password
+export const changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ message: "all fields are required" })
+        }
+
+        if (newPassword.length <= 6) {
+            return res.status(400).json({ message: "Password should be grater than 6 character" })
+        }
+
+        // find user to compare current password
+        const user = await User.findById(req.user._id)
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" })
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password)
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid old password" })
+        }
+
+        // salt & hashing new password
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassword = await bcrypt.hash(newPassword, salt)
+
+        user.password = hashedPassword
+        await user.save()
+
+        return res.status(200).json({ message: "Password changed successfully" })
+
+    }
+    catch (err) {
+        res.status(500).json({ message: 'server crashed', error: err.message })
+    }
+}
