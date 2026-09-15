@@ -3,6 +3,8 @@ import bcrypt from "bcrypt" // to secure out password through hashing
 import User from "../models/user.model.js";
 import genToken from "../utils/generateTokens.js";
 
+
+//to secure from hacking our cookies
 const coockiesOptions = {
     httpOnly : true
 }
@@ -44,6 +46,7 @@ export const registerUser = async (req, res) => {
         })
         //token
         const token = genToken(newUser._id)
+        console.log("tocken" , token)
 
         //storing tokens inside coockies
         res.cookie('token' , token , coockiesOptions)
@@ -87,7 +90,8 @@ export const loginUser = async (req, res) => {
         }
 
         //token
-        const token = genToken(user._id)
+        const token = await genToken(user._id) // from tocken we have to pass user_id from mongodb , which this mondodb has created separately
+        console.log("tocken" , token)
 
         //storing tokens inside coockies
         res.cookie('token', token, coockiesOptions)
@@ -109,7 +113,7 @@ export const loginUser = async (req, res) => {
     }
 }
 
-// get current user profile
+// get current user profile -- after verify coockies to redirect the user   
 export const getProfile = async (req, res) => {
     try {
         return res.status(200).json({ user: req.user })

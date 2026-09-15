@@ -9,6 +9,6 @@ userRouter.post('/register', registerUser)
 userRouter.post('/login', loginUser)
 userRouter.post('/logout', logoutUser)
 userRouter.post('/change-password', isAuthenticated, changePassword)
-userRouter.get('/me', isAuthenticated, getProfile)
+userRouter.get('/me', isAuthenticated, getProfile)  // this route will pass the coockies to chak wether user`s token matches or not  
 
 export default userRouter
