@@ -6,7 +6,10 @@ import genToken from "../utils/generateTokens.js";
 
 //to secure from hacking our cookies
 const coockiesOptions = {
-    httpOnly : true
+    httpOnly: true,
+    maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days persistent cookie
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production"
 }
 
 export const registerUser = async (req, res) => {
@@ -126,7 +129,7 @@ export const getProfile = async (req, res) => {
 // logout user
 export const logoutUser = async (req, res) => {
     try {
-        res.clearCookie('token')
+        res.clearCookie('token', coockiesOptions)
         return res.status(200).json({ message: "Logged out successfully" })
     }
     catch (err) {

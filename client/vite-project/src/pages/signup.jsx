@@ -1,38 +1,55 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import JoVoLogo from '../components/JoVoLogo'
 import InstaCardsAnimation from '../components/InstaCardsAnimation'
 import api from '../axiosCalls/axios'
+import { useAuth } from '../context/AuthContext'
 
 // Tu jab axios call karega tab isko use kar sakta hai:
 // import api from '../axiosCalls/axios'
 
 const Signup = () => {
+    const navigate = useNavigate()
+    const { user, setUser, loading } = useAuth()
     // Password hide/show toggle ke liye UI state
     const [showPassword, setShowPassword] = useState(false)
     const [loader, setLoader] = useState(false)
     const [error, setError] = useState(null)
+
+    // Agar user pehle se logged in hai to direct home bhej do
+    useEffect(() => {
+        if (!loading && user) {
+            navigate('/home', { replace: true })
+        }
+    }, [user, loading, navigate])
 
     //we have to create state (obj) which will carry all the details of user and pass through the server 
     const [form, setForm] = useState({ name: "", username: "", email: "", password: "" })
    
     const handleChange = (e) => {
         setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
-        
+        if (error) setError(null)
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoader(true)
+        setError(null)
         // axios call yahan se hoga
         try {
-            await api.post('/users/register', form)
+            const res = await api.post('/users/register', form)
             setLoader(false)
             console.log("account created successfully ")
+            if (res.data?.user) {
+                setUser(res.data.user)
+                localStorage.setItem('jovo_user', JSON.stringify(res.data.user))
+            }
+            navigate('/home')
         } catch (error) {
             setLoader(false)
-            setError(error)
+            const msg = error.response?.data?.message || "Registration failed"
+            setError(msg)
             console.log(error)
         }
     }
@@ -81,7 +98,14 @@ const Signup = () => {
                         </h2>
 
                         {/* FORM */}
-                        <form className="flex flex-col gap-3">
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                            {/* Error Alert */}
+                            {error && (
+                                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                                    {error}
+                                </div>
+                            )}
+
                             {/* Full Name */}
                             <div className="flex flex-col">
                                 <input
@@ -141,11 +165,11 @@ const Signup = () => {
 
                             {/* Submit Button (Instagram Blue) */}
                             <button
-                            onClick={handleSubmit}
                                 type="submit"
-                                className="w-full mt-2 py-3 rounded-xl bg-[#0064e0] hover:bg-[#1877f2] font-semibold text-white text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                                disabled={loader}
+                                className={`w-full mt-2 py-3 rounded-xl bg-[#0064e0] hover:bg-[#1877f2] font-semibold text-white text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-md ${loader ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                Sign up
+                                {loader ? "Signing up..." : "Sign up"}
                             </button>
                         </form>
 

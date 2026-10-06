@@ -1,23 +1,55 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import JoVoLogo from '../components/JoVoLogo'
 import InstaCardsAnimation from '../components/InstaCardsAnimation'
-
-// Tu jab axios call karega tab isko use kar sakta hai:
-// import api from '../axiosCalls/axios'
+import api from '../axiosCalls/axios'
+import { useAuth } from '../context/AuthContext'
 
 const Login = () => {
+    const navigate = useNavigate()
+    const { user, setUser, loading } = useAuth()
     // Password hide/show toggle ke liye UI state
     const [showPassword, setShowPassword] = useState(false)
+    const [loader, setLoader] = useState(false)
+    const [error, setError] = useState(null)
 
-    /* =========================================================================
-       BHAI, YAHAN TU APNE FUNCTIONS AUR STATES LIKH SAKTA HAI:
-       - formData state (email, password)
-       - handleChange function
-       - handleSubmit function (Axios POST to /users/login)
-       - Validation & error handling
-       ========================================================================= */
+    // Agar user pehle se logged in hai to direct home bhej do
+    useEffect(() => {
+        if (!loading && user) {
+            navigate('/home', { replace: true })
+        }
+    }, [user, loading, navigate])
+
+    // User details state for login
+    const [form, setForm] = useState({ email: "", password: "" })
+
+    const handleChange = (e) => {
+        setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+        if (error) setError(null)
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setLoader(true)
+        setError(null)
+
+        try {
+            const res = await api.post('/users/login', form)
+            setLoader(false)
+            console.log("Logged in successfully")
+            if (res.data?.user) {
+                setUser(res.data.user)
+                localStorage.setItem('jovo_user', JSON.stringify(res.data.user))
+            }
+            navigate('/home')
+        } catch (err) {
+            setLoader(false)
+            const msg = err.response?.data?.message || "Invalid credentials or login failed"
+            setError(msg)
+            console.log(err)
+        }
+    }
 
     return (
         <div className="min-h-screen w-full bg-[#000000] text-white flex flex-col justify-between">
@@ -61,14 +93,23 @@ const Login = () => {
                         </h2>
 
                         {/* FORM */}
-                        <form className="flex flex-col gap-3">
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                            {/* Error Alert */}
+                            {error && (
+                                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                                    {error}
+                                </div>
+                            )}
+
                             {/* Email */}
                             <div className="flex flex-col">
                                 <input
                                     type="email"
                                     name="email"
+                                    value={form.email}
                                     placeholder="email address"
                                     className="w-full bg-[#1c1c1e] text-white text-sm rounded-xl px-4 py-3.5 border border-[#363636] hover:border-[#555] focus:border-[#737373] transition-all duration-200 placeholder:text-zinc-500 focus:outline-none"
+                                    onChange={handleChange}
                                 />
                             </div>
 
@@ -78,8 +119,10 @@ const Login = () => {
                                     <input
                                         type={showPassword ? 'text' : 'password'}
                                         name="password"
+                                        value={form.password}
                                         placeholder="Password"
                                         className="w-full bg-[#1c1c1e] text-white text-sm rounded-xl pl-4 pr-11 py-3.5 border border-[#363636] hover:border-[#555] focus:border-[#737373] transition-all duration-200 placeholder:text-zinc-500 focus:outline-none"
+                                        onChange={handleChange}
                                     />
                                     <button
                                         type="button"
@@ -94,9 +137,10 @@ const Login = () => {
                             {/* Submit Button (Instagram Blue) */}
                             <button
                                 type="submit"
-                                className="w-full mt-2 py-3 rounded-xl bg-[#0064e0] hover:bg-[#1877f2] font-semibold text-white text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                                disabled={loader}
+                                className={`w-full mt-2 py-3 rounded-xl bg-[#0064e0] hover:bg-[#1877f2] font-semibold text-white text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-md ${loader ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                Log in
+                                {loader ? "Logging in..." : "Log in"}
                             </button>
                         </form>
 

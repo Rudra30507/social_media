@@ -3,23 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { LogOut, Heart, MessageCircle, Share2, Sparkles } from 'lucide-react'
 import JoVoLogo from '../components/JoVoLogo'
 import api from '../axiosCalls/axios'
+import { useAuth } from '../context/AuthContext'
 
 const Home = () => {
   const navigate = useNavigate()
-  const [currentUser, setCurrentUser] = useState(null)
-
-  useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const res = await api.get('/users/me')
-        setCurrentUser(res.data.user)
-      } catch (e) {
-        const cached = localStorage.getItem('jovo_user')
-        if (cached) setCurrentUser(JSON.parse(cached))
-      }
-    }
-    fetchMe()
-  }, [])
+  const { user: currentUser, setUser } = useAuth()
 
   const handleLogout = async () => {
     try {
@@ -27,6 +15,7 @@ const Home = () => {
     } catch (e) {
       console.error(e)
     }
+    setUser(null)
     localStorage.removeItem('jovo_user')
     navigate('/login')
   }
